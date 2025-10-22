@@ -28,7 +28,7 @@ print_header() {
 install_nodejs() {
     print_status "Installing Node.js 20..."
     
-    # Method 1: Try using nix (for Replit)
+    # Method 1: Try using nix (for Replit) - NO SUDO
     if command -v nix-env &> /dev/null; then
         print_status "Using nix to install Node.js..."
         nix-env -iA nixpkgs.nodejs_20 || {
@@ -36,33 +36,49 @@ install_nodejs() {
         }
     fi
     
-    # Method 2: Try using apt (for Ubuntu/Debian)
-    if ! command -v node &> /dev/null && command -v apt-get &> /dev/null; then
-        print_status "Using apt to install Node.js..."
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-        sudo apt-get install -y nodejs || {
-            print_warning "Apt installation failed, trying alternative method..."
-        }
-    fi
-    
-    # Method 3: Try using snap
-    if ! command -v node &> /dev/null && command -v snap &> /dev/null; then
-        print_status "Using snap to install Node.js..."
-        sudo snap install node --classic || {
-            print_warning "Snap installation failed, trying alternative method..."
-        }
-    fi
-    
-    # Method 4: Try using nvm
+    # Method 2: Try using nvm (NO SUDO required)
     if ! command -v node &> /dev/null; then
         print_status "Using nvm to install Node.js..."
         if [ ! -d "$HOME/.nvm" ]; then
+            print_status "Installing nvm..."
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        else
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         fi
         nvm install 20
         nvm use 20
+    fi
+    
+    # Method 3: Try downloading Node.js binary directly (NO SUDO)
+    if ! command -v node &> /dev/null; then
+        print_status "Downloading Node.js binary directly..."
+        NODE_VERSION="20.19.0"
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "x86_64" ]; then
+            NODE_ARCH="x64"
+        elif [ "$ARCH" = "aarch64" ]; then
+            NODE_ARCH="arm64"
+        else
+            NODE_ARCH="x64"  # fallback
+        fi
+        
+        NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
+        NODE_DIR="$HOME/node-${NODE_VERSION}"
+        
+        if [ ! -d "$NODE_DIR" ]; then
+            print_status "Downloading Node.js from $NODE_URL..."
+            curl -fsSL "$NODE_URL" -o "/tmp/node.tar.xz"
+            tar -xf "/tmp/node.tar.xz" -C "$HOME"
+            mv "$HOME/node-v${NODE_VERSION}-linux-${NODE_ARCH}" "$NODE_DIR"
+            rm "/tmp/node.tar.xz"
+        fi
+        
+        # Add to PATH
+        export PATH="$NODE_DIR/bin:$PATH"
+        echo 'export PATH="$HOME/node-20.19.0/bin:$PATH"' >> "$HOME/.bashrc"
     fi
     
     # Verify installation
@@ -75,16 +91,15 @@ install_nodejs() {
             print_status "Installing npm..."
             if command -v nix-env &> /dev/null; then
                 nix-env -iA nixpkgs.nodePackages.npm
-            elif command -v apt-get &> /dev/null; then
-                sudo apt-get install -y npm
+            else
+                print_warning "npm should be included with Node.js installation"
             fi
         fi
     else
         print_error "Failed to install Node.js using all available methods!"
-        print_info "Please install Node.js manually:"
-        print_info "1. Visit https://nodejs.org/"
-        print_info "2. Download and install Node.js 20 or later"
-        print_info "3. Restart this script"
+        print_info "Please check your replit.nix file and ensure it includes:"
+        print_info "{ pkgs }: { deps = [ pkgs.nodejs_20 pkgs.nodePackages.npm ]; }"
+        print_info "Then restart your Replit environment"
         exit 1
     fi
 }
@@ -93,7 +108,7 @@ install_nodejs() {
 install_npm() {
     print_status "Installing npm..."
     
-    # Method 1: Try using nix (for Replit)
+    # Method 1: Try using nix (for Replit) - NO SUDO
     if command -v nix-env &> /dev/null; then
         print_status "Using nix to install npm..."
         nix-env -iA nixpkgs.nodePackages.npm || {
@@ -101,24 +116,7 @@ install_npm() {
         }
     fi
     
-    # Method 2: Try using apt (for Ubuntu/Debian)
-    if ! command -v npm &> /dev/null && command -v apt-get &> /dev/null; then
-        print_status "Using apt to install npm..."
-        sudo apt-get update
-        sudo apt-get install -y npm || {
-            print_warning "Apt npm installation failed, trying alternative method..."
-        }
-    fi
-    
-    # Method 3: Try using snap
-    if ! command -v npm &> /dev/null && command -v snap &> /dev/null; then
-        print_status "Using snap to install npm..."
-        sudo snap install npm --classic || {
-            print_warning "Snap npm installation failed, trying alternative method..."
-        }
-    fi
-    
-    # Method 4: Try using nvm (if available)
+    # Method 2: Try using nvm (if available) - NO SUDO
     if ! command -v npm &> /dev/null && [ -d "$HOME/.nvm" ]; then
         print_status "Using nvm to install npm..."
         export NVM_DIR="$HOME/.nvm"
@@ -127,12 +125,19 @@ install_npm() {
         nvm use 20
     fi
     
-    # Method 5: Try installing npm directly
+    # Method 3: Try installing npm directly - NO SUDO
     if ! command -v npm &> /dev/null && command -v node &> /dev/null; then
         print_status "Installing npm directly..."
         curl -L https://npmjs.org/install.sh | sh || {
             print_warning "Direct npm installation failed, trying alternative method..."
         }
+    fi
+    
+    # Method 4: Try using npm from Node.js binary directory
+    if ! command -v npm &> /dev/null && [ -d "$HOME/node-20.19.0" ]; then
+        print_status "Using npm from Node.js binary directory..."
+        export PATH="$HOME/node-20.19.0/bin:$PATH"
+        echo 'export PATH="$HOME/node-20.19.0/bin:$PATH"' >> "$HOME/.bashrc"
     fi
     
     # Verify installation
@@ -141,11 +146,9 @@ install_npm() {
         print_success "npm installed successfully: $npm_version"
     else
         print_error "Failed to install npm using all available methods!"
-        print_info "Please install npm manually:"
-        print_info "1. Make sure Node.js is installed"
-        print_info "2. Visit https://www.npmjs.com/get-npm"
-        print_info "3. Follow the installation instructions"
-        print_info "4. Restart this script"
+        print_info "Please check your replit.nix file and ensure it includes:"
+        print_info "{ pkgs }: { deps = [ pkgs.nodejs_20 pkgs.nodePackages.npm ]; }"
+        print_info "Then restart your Replit environment"
         exit 1
     fi
 }
