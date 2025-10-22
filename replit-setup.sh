@@ -24,6 +24,132 @@ print_header() {
     echo -e "${PURPLE}================================${NC}"
 }
 
+# Function untuk install Node.js
+install_nodejs() {
+    print_status "Installing Node.js 20..."
+    
+    # Method 1: Try using nix (for Replit)
+    if command -v nix-env &> /dev/null; then
+        print_status "Using nix to install Node.js..."
+        nix-env -iA nixpkgs.nodejs_20 || {
+            print_warning "Nix installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Method 2: Try using apt (for Ubuntu/Debian)
+    if ! command -v node &> /dev/null && command -v apt-get &> /dev/null; then
+        print_status "Using apt to install Node.js..."
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs || {
+            print_warning "Apt installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Method 3: Try using snap
+    if ! command -v node &> /dev/null && command -v snap &> /dev/null; then
+        print_status "Using snap to install Node.js..."
+        sudo snap install node --classic || {
+            print_warning "Snap installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Method 4: Try using nvm
+    if ! command -v node &> /dev/null; then
+        print_status "Using nvm to install Node.js..."
+        if [ ! -d "$HOME/.nvm" ]; then
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        nvm install 20
+        nvm use 20
+    fi
+    
+    # Verify installation
+    if command -v node &> /dev/null; then
+        node_version=$(node --version)
+        print_success "Node.js installed successfully: $node_version"
+        
+        # Check if npm is also available
+        if ! command -v npm &> /dev/null; then
+            print_status "Installing npm..."
+            if command -v nix-env &> /dev/null; then
+                nix-env -iA nixpkgs.nodePackages.npm
+            elif command -v apt-get &> /dev/null; then
+                sudo apt-get install -y npm
+            fi
+        fi
+    else
+        print_error "Failed to install Node.js using all available methods!"
+        print_info "Please install Node.js manually:"
+        print_info "1. Visit https://nodejs.org/"
+        print_info "2. Download and install Node.js 20 or later"
+        print_info "3. Restart this script"
+        exit 1
+    fi
+}
+
+# Function untuk install npm
+install_npm() {
+    print_status "Installing npm..."
+    
+    # Method 1: Try using nix (for Replit)
+    if command -v nix-env &> /dev/null; then
+        print_status "Using nix to install npm..."
+        nix-env -iA nixpkgs.nodePackages.npm || {
+            print_warning "Nix npm installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Method 2: Try using apt (for Ubuntu/Debian)
+    if ! command -v npm &> /dev/null && command -v apt-get &> /dev/null; then
+        print_status "Using apt to install npm..."
+        sudo apt-get update
+        sudo apt-get install -y npm || {
+            print_warning "Apt npm installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Method 3: Try using snap
+    if ! command -v npm &> /dev/null && command -v snap &> /dev/null; then
+        print_status "Using snap to install npm..."
+        sudo snap install npm --classic || {
+            print_warning "Snap npm installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Method 4: Try using nvm (if available)
+    if ! command -v npm &> /dev/null && [ -d "$HOME/.nvm" ]; then
+        print_status "Using nvm to install npm..."
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        nvm install 20
+        nvm use 20
+    fi
+    
+    # Method 5: Try installing npm directly
+    if ! command -v npm &> /dev/null && command -v node &> /dev/null; then
+        print_status "Installing npm directly..."
+        curl -L https://npmjs.org/install.sh | sh || {
+            print_warning "Direct npm installation failed, trying alternative method..."
+        }
+    fi
+    
+    # Verify installation
+    if command -v npm &> /dev/null; then
+        npm_version=$(npm --version)
+        print_success "npm installed successfully: $npm_version"
+    else
+        print_error "Failed to install npm using all available methods!"
+        print_info "Please install npm manually:"
+        print_info "1. Make sure Node.js is installed"
+        print_info "2. Visit https://www.npmjs.com/get-npm"
+        print_info "3. Follow the installation instructions"
+        print_info "4. Restart this script"
+        exit 1
+    fi
+}
+
 print_status() {
     echo -e "${BLUE}[SETUP]${NC} $1"
 }
@@ -70,10 +196,12 @@ if command -v node &> /dev/null; then
         print_success "Node.js version is compatible (>= 20)"
     else
         print_warning "Node.js version might be too old (< 20)"
+        print_status "Attempting to install Node.js 20..."
+        install_nodejs
     fi
 else
-    print_error "Node.js not found!"
-    exit 1
+    print_warning "Node.js not found! Attempting to install..."
+    install_nodejs
 fi
 
 print_status "Checking npm..."
@@ -81,8 +209,8 @@ if command -v npm &> /dev/null; then
     npm_version=$(npm --version)
     print_success "npm found: $npm_version"
 else
-    print_error "npm not found!"
-    exit 1
+    print_warning "npm not found! Attempting to install..."
+    install_npm
 fi
 
 print_status "Checking git..."
