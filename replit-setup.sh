@@ -8,6 +8,15 @@ set -e  # Exit on any error
 
 echo "🔧 KD Frontend - Replit Setup Starting..."
 
+# Ensure HOME is set correctly at the start
+if [ -z "$HOME" ] || [ "$HOME" = "/" ]; then
+    export HOME=$(eval echo ~$USER)
+    if [ -z "$HOME" ] || [ "$HOME" = "/" ]; then
+        export HOME="/home/runner"  # Replit default
+    fi
+    echo "⚠️ HOME was not set correctly, using: $HOME"
+fi
+
 # Colors untuk output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -39,22 +48,47 @@ install_nodejs() {
     # Method 2: Try using nvm (NO SUDO required)
     if ! command -v node &> /dev/null; then
         print_status "Using nvm to install Node.js..."
+        
+        # Ensure HOME is set correctly
+        if [ -z "$HOME" ] || [ "$HOME" = "/" ]; then
+            export HOME=$(eval echo ~$USER)
+            if [ -z "$HOME" ] || [ "$HOME" = "/" ]; then
+                export HOME="/home/runner"  # Replit default
+            fi
+        fi
+        
         if [ ! -d "$HOME/.nvm" ]; then
-            print_status "Installing nvm..."
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            print_status "Installing nvm to $HOME/.nvm..."
             export NVM_DIR="$HOME/.nvm"
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | NVM_DIR="$NVM_DIR" bash
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         else
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         fi
-        nvm install 20
-        nvm use 20
+        
+        if command -v nvm &> /dev/null; then
+            nvm install 20
+            nvm use 20
+        else
+            print_warning "nvm installation failed, trying next method..."
+        fi
     fi
     
     # Method 3: Try downloading Node.js binary directly (NO SUDO)
     if ! command -v node &> /dev/null; then
         print_status "Downloading Node.js binary directly..."
+        
+        # Ensure HOME is set correctly
+        if [ -z "$HOME" ] || [ "$HOME" = "/" ]; then
+            export HOME=$(eval echo ~$USER)
+            if [ -z "$HOME" ] || [ "$HOME" = "/" ]; then
+                export HOME="/home/runner"  # Replit default
+            fi
+        fi
+        
+        print_status "Using HOME directory: $HOME"
+        
         NODE_VERSION="20.19.0"
         ARCH=$(uname -m)
         if [ "$ARCH" = "x86_64" ]; then
@@ -70,15 +104,41 @@ install_nodejs() {
         
         if [ ! -d "$NODE_DIR" ]; then
             print_status "Downloading Node.js from $NODE_URL..."
-            curl -fsSL "$NODE_URL" -o "/tmp/node.tar.xz"
-            tar -xf "/tmp/node.tar.xz" -C "$HOME"
-            mv "$HOME/node-v${NODE_VERSION}-linux-${NODE_ARCH}" "$NODE_DIR"
-            rm "/tmp/node.tar.xz"
+            print_status "Will install to: $NODE_DIR"
+            
+            # Create temp directory if needed
+            mkdir -p "$HOME/tmp"
+            TEMP_FILE="$HOME/tmp/node.tar.xz"
+            
+            if curl -fsSL "$NODE_URL" -o "$TEMP_FILE"; then
+                print_success "Download completed!"
+                print_status "Extracting Node.js..."
+                
+                if tar -xf "$TEMP_FILE" -C "$HOME"; then
+                    mv "$HOME/node-v${NODE_VERSION}-linux-${NODE_ARCH}" "$NODE_DIR"
+                    rm "$TEMP_FILE"
+                    print_success "Node.js extracted successfully!"
+                else
+                    print_error "Failed to extract Node.js"
+                fi
+            else
+                print_error "Failed to download Node.js"
+            fi
         fi
         
         # Add to PATH
-        export PATH="$NODE_DIR/bin:$PATH"
-        echo 'export PATH="$HOME/node-20.19.0/bin:$PATH"' >> "$HOME/.bashrc"
+        if [ -d "$NODE_DIR/bin" ]; then
+            export PATH="$NODE_DIR/bin:$PATH"
+            
+            # Add to shell rc files if they exist
+            for rc_file in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+                if [ -f "$rc_file" ] && ! grep -q "node-${NODE_VERSION}/bin" "$rc_file"; then
+                    echo "export PATH=\"\$HOME/node-${NODE_VERSION}/bin:\$PATH\"" >> "$rc_file"
+                fi
+            done
+            
+            print_success "Node.js binary installed to $NODE_DIR"
+        fi
     fi
     
     # Verify installation
