@@ -302,6 +302,10 @@ print_success "Environment variables set!"
 # Step 4: Check Project Files
 print_header "Step 4: Checking Project Files"
 
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
 required_files=(
     "package.json"
     "vite.config.ts"
@@ -311,11 +315,14 @@ required_files=(
     "replit.nix"
 )
 
+print_status "Working directory: $(pwd)"
+
 for file in "${required_files[@]}"; do
     if [ -f "$file" ]; then
         print_success "✓ $file found"
     else
         print_error "✗ $file missing!"
+        print_warning "Looking in: $(pwd)/$file"
         exit 1
     fi
 done
