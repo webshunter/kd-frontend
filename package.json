@@ -8,7 +8,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "start": "npm run dev",
+    "replit": "./start.sh",
+    "install-deps": "npm install",
+    "clean": "rm -rf node_modules package-lock.json && npm install"
   },
   "dependencies": {
     "react": "^19.1.1",

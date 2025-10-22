@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
     // Backend ini akan tetap digunakan sampai migrasi ke Supabase selesai
     const backendUrl = env.VITE_BACKEND_URL || 'https://kdtangsel.hubunk.id';
     const apiPath = env.VITE_API_URL || '/api';
-    const frontendUrl = env.VITE_FRONTEND_URL || 'http://localhost:9057';
+    const frontendUrl = env.VITE_FRONTEND_URL || 'http://localhost:5000';
     const allowedHosts = (env.VITE_ALLOWED_HOSTS || 'tangsel.hubunk.id,kdtangsel.hubunk.id')
       .split(',')
       .map(host => host.trim())
@@ -16,14 +16,17 @@ export default defineConfig(({ mode }) => {
     
     return {
       server: {
-        port: 9057,
-        host: '0.0.0.0',
+        port: 5000,
+        host: '0.0.0.0', // Penting untuk Replit agar bisa diakses dari luar
         headers: {
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
           'Cross-Origin-Embedder-Policy': 'unsafe-none',
         },
         // Mengizinkan domain produksi tertentu mengakses dev server
         allowedHosts,
+        // Konfigurasi untuk Replit
+        strictPort: false, // Biarkan Vite mencari port alternatif jika 5000 sibuk
+        open: false, // Jangan buka browser otomatis di Replit
         proxy: {
           // Proxy semua request /api ke backend server
           // CATATAN LOVABLE: Jangan ubah schema ini saat migrasi ke Supabase
@@ -55,13 +58,16 @@ export default defineConfig(({ mode }) => {
         }
       },
       preview: {
-        port: 9057,
-        host: '0.0.0.0',
+        port: 5000,
+        host: '0.0.0.0', // Penting untuk Replit agar bisa diakses dari luar
         headers: {
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
           'Cross-Origin-Embedder-Policy': 'unsafe-none',
         },
         allowedHosts,
+        // Konfigurasi untuk Replit
+        strictPort: false, // Biarkan Vite mencari port alternatif jika 5000 sibuk
+        open: false, // Jangan buka browser otomatis di Replit
         proxy: {
           '/api': {
             target: backendUrl,
