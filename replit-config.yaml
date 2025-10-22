@@ -1,0 +1,180 @@
+# Replit Configuration untuk KD Frontend Project
+# Kampung Digital Tangerang Selatan - UMKM Platform
+
+# Project Information
+project:
+  name: "KD Frontend - Kampung Digital Tangsel"
+  description: "Frontend untuk platform UMKM Kampung Digital Tangerang Selatan"
+  version: "1.0.0"
+  author: "Kampung Digital Team"
+  license: "MIT"
+
+# Language Configuration
+language:
+  type: "nodejs"
+  version: "20"
+  package_manager: "npm"
+
+# Nix Configuration
+nix:
+  channel: "nixpkgs"
+  packages:
+    - "nodejs_20"
+    - "nodePackages.npm"
+    - "git"
+    - "curl"
+    - "wget"
+    - "gcc"
+    - "gnumake"
+    - "python3"
+    - "jq"
+    - "htop"
+    - "tree"
+
+# Runtime Configuration
+runtime:
+  run_command: "./workflow.sh"
+  port: 5000
+  host: "0.0.0.0"
+  always_run: true
+  auto_start: true
+
+# Environment Variables
+environment:
+  NODE_ENV: "development"
+  NODE_OPTIONS: "--max-old-space-size=4096"
+  VITE_BACKEND_URL: "https://kdtangsel.hubunk.id"
+  VITE_API_URL: "/api"
+  VITE_FRONTEND_URL: "http://localhost:5000"
+  VITE_ALLOWED_HOSTS: "tangsel.hubunk.id,kdtangsel.hubunk.id"
+  CI: "false"
+  DISABLE_ESLINT_PLUGIN: "true"
+
+# File Management
+files:
+  open_on_start:
+    - "index.html"
+    - "package.json"
+    - "vite.config.ts"
+  
+  hidden_files:
+    - ".replit"
+    - "replit.nix"
+    - ".replitignore"
+    - "workflow.sh"
+    - "start.sh"
+    - "history.txt"
+    - "replit-settings.json"
+    - "replit-config.yaml"
+    - "replit-env.example"
+
+# Build Configuration
+build:
+  command: "npm run build"
+  output_directory: "dist"
+  install_command: "npm install"
+  start_command: "npm run dev"
+  preview_command: "npm run preview"
+
+# Development Tools
+development:
+  debugger:
+    enabled: true
+    transport: "localhost:0"
+    start_command: "npm run dev"
+  
+  lsp:
+    language: "typescript"
+  
+  file_types:
+    "*.tsx": "typescript"
+    "*.ts": "typescript"
+    "*.jsx": "javascript"
+    "*.js": "javascript"
+
+# Git Configuration
+git:
+  auto_commit: false
+  always_pull: false
+  always_push: false
+  ignore_patterns:
+    - "node_modules/"
+    - "dist/"
+    - ".git/"
+    - "*.log"
+    - ".env.local"
+    - ".env.production"
+
+# Features
+features:
+  auto_pull: true
+  auto_install: true
+  auto_start: true
+  hot_reload: true
+  port_fallback: true
+  security_audit: true
+  build_test: true
+  environment_setup: true
+  error_handling: true
+  logging: true
+
+# Requirements
+requirements:
+  node: ">=20.0.0"
+  npm: ">=9.0.0"
+  memory: ">=512MB"
+  storage: ">=100MB"
+  cpu: ">=1 core"
+
+# Deployment
+deployment:
+  platform: "replit"
+  region: "auto"
+  scaling: "manual"
+  domains: ["auto-generated"]
+  ssl: true
+  custom_domain: false
+
+# Monitoring
+monitoring:
+  enabled: true
+  performance: true
+  errors: true
+  logs: true
+  metrics: true
+
+# Security
+security:
+  headers: true
+  cors: true
+  csp: true
+  audit: true
+  vulnerabilities: true
+
+# Performance
+performance:
+  bundle_analysis: false
+  compression: true
+  caching: true
+  minification: true
+  tree_shaking: true
+
+# Notifications
+notifications:
+  enabled: true
+  sound: true
+  desktop: true
+  email: false
+
+# Theme
+theme:
+  default: "light"
+  switchable: true
+  auto_detect: true
+
+# Custom Settings
+custom:
+  config: {}
+  plugins: []
+  extensions: []
+  scripts: []
