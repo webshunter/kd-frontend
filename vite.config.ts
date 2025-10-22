@@ -14,6 +14,10 @@ export default defineConfig(({ mode }) => {
       .map(host => host.trim())
       .filter(Boolean);
     
+    // Tambahkan pattern untuk Replit domains
+    allowedHosts.push('.replit.dev');
+    allowedHosts.push('.repl.co');
+    
     return {
       server: {
         port: 5000,
@@ -23,7 +27,7 @@ export default defineConfig(({ mode }) => {
           'Cross-Origin-Embedder-Policy': 'unsafe-none',
         },
         // Mengizinkan domain produksi tertentu mengakses dev server
-        allowedHosts,
+        allowedHosts: allowedHosts.concat(['all']), // Allow all hosts for Replit
         // Konfigurasi untuk Replit
         strictPort: false, // Biarkan Vite mencari port alternatif jika 5000 sibuk
         open: false, // Jangan buka browser otomatis di Replit
@@ -64,7 +68,7 @@ export default defineConfig(({ mode }) => {
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
           'Cross-Origin-Embedder-Policy': 'unsafe-none',
         },
-        allowedHosts,
+        allowedHosts: allowedHosts.concat(['all']), // Allow all hosts for Replit
         // Konfigurasi untuk Replit
         strictPort: false, // Biarkan Vite mencari port alternatif jika 5000 sibuk
         open: false, // Jangan buka browser otomatis di Replit
