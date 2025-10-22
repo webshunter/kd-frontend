@@ -1,96 +1,12 @@
-# Konfigurasi Replit untuk KD Frontend Project
-# Kampung Digital Tangerang Selatan - UMKM Platform
+entrypoint = "workflow.sh"
+modules = ["nodejs-20"]
 
-# Nix configuration untuk environment
-nix = "nixpkgs"
+[nix]
+channel = "stable-24_05"
 
-# Language yang digunakan
-language = "nodejs"
+[deployment]
+run = ["sh", "-c", "npm run dev"]
 
-# Entry point untuk menjalankan project - menggunakan workflow script
-run = "./workflow.sh"
-
-# Port yang akan digunakan (sesuai dengan konfigurasi Vite)
-port = 5000
-
-# Always run command saat Replit start
-alwaysRun = true
-
-# Open browser otomatis (opsional)
-openFiles = ["index.html"]
-
-# Hidden files yang tidak ditampilkan di file tree
-hidden = [".replit", "replit.nix", ".replitignore", "workflow.sh", "start.sh"]
-
-# File yang akan dibuka otomatis saat project start
-[openFiles]
-"index.html" = "index.html"
-"package.json" = "package.json"
-"vite.config.ts" = "vite.config.ts"
-
-# Environment variables untuk development
-[env]
-VITE_BACKEND_URL = "https://kdtangsel.hubunk.id"
-VITE_API_URL = "/api"
-VITE_FRONTEND_URL = "http://localhost:5000"
-VITE_ALLOWED_HOSTS = "tangsel.hubunk.id,kdtangsel.hubunk.id"
-
-# Unit test configuration (jika diperlukan)
-[unitTest]
-language = "nodejs"
-pattern = "**/*.{test,spec}.{js,ts,tsx}"
-
-# Debug configuration
-[debugger]
-support = true
-transport = "localhost:0"
-startCommand = "npm run dev"
-
-# LSP (Language Server Protocol) configuration
-[lsp]
-language = "typescript"
-
-# File associations
-[fileTypes]
-"*.tsx" = "typescript"
-"*.ts" = "typescript"
-"*.jsx" = "javascript"
-"*.js" = "javascript"
-
-# Git configuration
-[git]
-# Auto-commit changes
-autoCommit = false
-
-# Always pull latest changes
-alwaysPull = false
-
-# Always push changes
-alwaysPush = false
-
-# Ignore files
-ignore = [
-  "node_modules/",
-  "dist/",
-  ".git/",
-  "*.log",
-  ".env.local",
-  ".env.production"
-]
-
-# Build configuration
-[build]
-# Command untuk build production
-command = "npm run build"
-
-# Output directory
-outputDir = "dist"
-
-# Install dependencies command
-install = "npm install"
-
-# Start command
-start = "npm run dev"
-
-# Preview command
-preview = "npm run preview"
+[[ports]]
+localPort = 5000
+externalPort = 80
