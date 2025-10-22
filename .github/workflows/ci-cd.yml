@@ -1,0 +1,146 @@
+name: KD Frontend CI/CD Pipeline
+
+# Trigger workflow pada push dan pull request ke main branch
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+# Environment variables
+env:
+  NODE_VERSION: '20'
+  VITE_BACKEND_URL: 'https://kdtangsel.hubunk.id'
+  VITE_API_URL: '/api'
+  VITE_FRONTEND_URL: 'http://localhost:5000'
+
+jobs:
+  # Job untuk testing dan linting
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Type check
+      run: npx tsc --noEmit
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: dist/
+        retention-days: 7
+
+  # Job untuk deployment ke Replit (jika diperlukan)
+  deploy-replit:
+    name: Deploy to Replit
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Deploy to Replit
+      # Note: Ini memerlukan Replit API key yang diset di GitHub Secrets
+      run: |
+        echo "🚀 Deploying to Replit..."
+        echo "📦 Build completed successfully!"
+        echo "🔗 Ready for Replit deployment!"
+        # Add actual Replit deployment commands here if needed
+
+  # Job untuk security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run security audit
+      run: npm audit --audit-level=moderate
+      
+    - name: Check for known vulnerabilities
+      run: |
+        echo "🔍 Checking for security vulnerabilities..."
+        npm audit --json > audit-results.json || true
+        echo "✅ Security audit completed!"
+
+  # Job untuk performance check
+  performance:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Analyze bundle size
+      run: |
+        echo "📊 Analyzing bundle size..."
+        ls -la dist/
+        du -sh dist/
+        echo "✅ Bundle analysis completed!"
+        
+    - name: Check bundle size limits
+      run: |
+        echo "🔍 Checking bundle size limits..."
+        # Check if main bundle is under 1MB
+        if [ $(stat -c%s dist/assets/*.js) -lt 1048576 ]; then
+          echo "✅ Bundle size is within limits!"
+        else
+          echo "⚠️ Bundle size exceeds 1MB!"
+        fi

@@ -1,0 +1,135 @@
+name: Replit Deployment Workflow
+
+# Trigger workflow secara manual atau pada push ke main
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-to-replit:
+    name: Deploy to Replit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: |
+        echo "🧪 Running tests..."
+        npm run lint
+        npx tsc --noEmit
+        echo "✅ Tests passed!"
+        
+    - name: Build project
+      run: |
+        echo "🔨 Building project..."
+        npm run build
+        echo "✅ Build completed!"
+        
+    - name: Prepare Replit files
+      run: |
+        echo "📦 Preparing files for Replit..."
+        
+        # Ensure all necessary files exist
+        if [ ! -f ".replit" ]; then
+          echo "❌ .replit file not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "replit.nix" ]; then
+          echo "❌ replit.nix file not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "workflow.sh" ]; then
+          echo "❌ workflow.sh file not found!"
+          exit 1
+        fi
+        
+        # Make scripts executable
+        chmod +x workflow.sh
+        chmod +x start.sh
+        
+        echo "✅ Replit files prepared!"
+        
+    - name: Create deployment package
+      run: |
+        echo "📦 Creating deployment package..."
+        
+        # Create a deployment info file
+        cat > deployment-info.txt << EOF
+KD Frontend Deployment Info
+==========================
+Deployment Time: $(date)
+Git Commit: ${{ github.sha }}
+Git Branch: ${{ github.ref_name }}
+Environment: ${{ github.event.inputs.environment || 'main' }}
+Node Version: $(node --version)
+NPM Version: $(npm --version)
+
+Files included:
+- .replit (Replit configuration)
+- replit.nix (Nix environment)
+- workflow.sh (Startup workflow)
+- start.sh (Startup script)
+- package.json (Dependencies)
+- vite.config.ts (Vite configuration)
+- All source code and assets
+
+Ready for Replit import!
+EOF
+        
+        echo "✅ Deployment package created!"
+        
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: replit-deployment-${{ github.sha }}
+        path: |
+          .
+          !node_modules
+          !dist
+          !.git
+        retention-days: 30
+        
+    - name: Deployment Summary
+      run: |
+        echo "🎉 Replit Deployment Ready!"
+        echo "=========================="
+        echo "📁 Repository: ${{ github.repository }}"
+        echo "🔗 Commit: ${{ github.sha }}"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "⏰ Time: $(date)"
+        echo ""
+        echo "📋 Next Steps:"
+        echo "1. Download the deployment artifact"
+        echo "2. Import to Replit"
+        echo "3. Run ./workflow.sh to start"
+        echo ""
+        echo "🔧 Configuration:"
+        echo "- Port: 5000"
+        echo "- Host: 0.0.0.0"
+        echo "- Auto-pull: Enabled"
+        echo "- Auto-install: Enabled"
+        echo "- Auto-start: Enabled"
